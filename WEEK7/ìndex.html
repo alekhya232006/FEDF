@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Online Bookstore</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #e0f7fa; /* Light teal background */
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #006064; /* Dark teal heading */
+      text-align: center;
+    }
+
+    .book-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .book {
+      background: #ffffff; /* White card */
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 15px;
+      width: 200px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .book button {
+      margin-top: 10px;
+      background: #00838f; /* Teal button */
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 10px;
+      cursor: pointer;
+    }
+
+    .book button:hover {
+      background: #005662; /* Darker teal on hover */
+    }
+
+    .cart {
+      max-width: 600px;
+      margin: 30px auto 0 auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+    }
+
+    .cart-total {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      display: none;
+      z-index: 1000;
+    }
+
+    #searchInput {
+      padding: 8px;
+      width: 60%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+
+    #cartCount {
+      background: #00838f;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <h1>📚 Online Bookstore</h1>
+
+  <div style="text-align:center; margin-bottom: 20px;">
+    <input type="text" id="searchInput" placeholder="Search books...">
+  </div>
+
+  <div class="book-list" id="bookList"></div>
+
+  <div class="cart">
+    <h2>🛒 Shopping Cart <span id="cartCount">0</span></h2>
+    <div id="cartItems"></div>
+    <div class="cart-total" id="cartTotal">Total: ₹0</div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script type="module">
+    // Sample Data
+    const books = [
+      { title: "This Is Not Your Story", author: "Savi Sharma", price: 350, availability: "in stock" },
+      { title: "The Silent Patient", author: "Alex Michaelides", price: 450, availability: "out of stock" },
+      { title: "The Twentieth Wife", author: "Indu Sundaresan", price: 400, availability: "in stock" },
+      { title: "A Thousand Splendid Suns", author: "Khaled Hosseini", price: 420, availability: "in stock" },
+      { title: "Red Flags and Rishtas", author: "Radhika Agarwal", price: 500, availability: "in stock" }
+    ];
+
+    // Cart Array
+    let cart = [];
+
+    // Toast Function
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.style.display = "block";
+      setTimeout(() => toast.style.display = "none", 2500);
+    }
+
+    // Display Books Function
+    function displayBooks(bookArray = books) {
+      const bookList = document.getElementById("bookList");
+      bookList.innerHTML = "";
+
+      bookArray.forEach((book, index) => {
+        const bookDiv = document.createElement("div");
+        bookDiv.classList.add("book");
+
+        bookDiv.innerHTML = `
+          <div>
+            <h3>${book.title}</h3>
+            <p><small>by ${book.author}</small></p>
+            <p>₹${book.price}</p>
+            ${
+              book.availability === "in stock"
+                ? `<button data-index="${index}">Add to Cart</button>`
+                : `<span style="color:red;">Out of Stock</span>`
+            }
+          </div>
+        `;
+
+        bookList.appendChild(bookDiv);
+      });
+
+      bookList.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const idx = Number(e.target.getAttribute("data-index"));
+          cart.push(bookArray[idx]);
+          updateCartUI();
+          showToast(`✅ Added "${bookArray[idx].title}" to cart`);
+        });
+      });
+    }
+
+    // Update Cart UI
+    function updateCartUI() {
+      const cartItemsDiv = document.getElementById("cartItems");
+      const cartTotalDiv = document.getElementById("cartTotal");
+      const cartCountSpan = document.getElementById("cartCount");
+
+      cartItemsDiv.innerHTML = "";
+      cart.forEach((book, index) => {
+        const itemDiv = document.createElement("div");
+        itemDiv.classList.add("cart-item");
+        itemDiv.innerHTML = `
+          <span>${book.title} - ₹${book.price}</span>
+          <button data-index="${index}" style="background:red; color:white; border:none; border-radius:6px; padding:4px 8px; cursor:pointer;">Remove</button>
+        `;
+        cartItemsDiv.appendChild(itemDiv);
+      });
+
+      cartItemsDiv.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", e => {
+          const idx = Number(e.target.getAttribute("data-index"));
+          const removedBook = cart[idx];
+          cart.splice(idx, 1);
+          updateCartUI();
+          showToast(`❌ Removed "${removedBook.title}" from cart`);
+        });
+      });
+
+      cartTotalDiv.textContent = `Total: ₹${cart.reduce((sum, book) => sum + book.price, 0)}`;
+      cartCountSpan.textContent = cart.length;
+    }
+
+    // Search Filter
+    document.getElementById("searchInput").addEventListener("input", (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = books.filter(book =>
+        book.title.toLowerCase().includes(query) ||
+        book.author.toLowerCase().includes(query)
+      );
+      displayBooks(filtered);
+    });
+
+    // Initialize
+    displayBooks();
+    updateCartUI();
+  </script>
+</body>
+</html>
